@@ -104,38 +104,44 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     for (i=1; i<numClusters; i++)
         newClusters[i] = newClusters[i-1] + numCoords;
 
-    do {
-        delta = 0.0;
-        for (i=0; i<numObjs; i++) {
-            /* find the array index of nestest cluster center */
-            index = find_nearest_cluster(numClusters, numCoords, objects[i],
-                                         clusters);
+do {
+    delta = 0.0;
+    #pragma omp parallel for reduction(+:delta) private(index, j)
+    for (i = 0; i < numObjs; i++) {
+        /* find the array index of the nearest cluster center */
+        index = find_nearest_cluster(numClusters, numCoords, objects[i], clusters);
 
-            /* if membership changes, increase delta by 1 */
-            if (membership[i] != index) delta += 1.0;
-
-            /* assign the membership to object i */
-            membership[i] = index;
-
-            /* update new cluster center : sum of objects located within */
-            newClusterSize[index]++;
-            for (j=0; j<numCoords; j++)
-                newClusters[index][j] += objects[i][j];
+        /* if membership changes, increase delta by 1 */
+        if (membership[i] != index) {
+            delta += 1.0;
         }
 
-        /* average the sum and replace old cluster center with newClusters */
-        for (i=0; i<numClusters; i++) {
-            #pragma omp parallel for schedule(static)
-            for (j=0; j<numCoords; j++) {
-                if (newClusterSize[i] > 0)
-                    clusters[i][j] = newClusters[i][j] / newClusterSize[i];
-                newClusters[i][j] = 0.0;   /* set back to 0 */
-            }
-            newClusterSize[i] = 0;   /* set back to 0 */
+        /* assign the membership to object i */
+        membership[i] = index;
+
+        /* update new cluster center: sum of objects located within */
+        #pragma omp atomic
+        newClusterSize[index]++; // Ensure this update is safe for multiple threads
+
+        for (j = 0; j < numCoords; j++) {
+            #pragma omp atomic
+            newClusters[index][j] += objects[i][j]; // Accumulate safely
         }
-            
-        delta /= numObjs;
-    } while (delta > threshold && loop++ < 500);
+    }
+
+    /* average the sum and replace old cluster center with newClusters */
+    for (i = 0; i < numClusters; i++) {
+        for (j = 0; j < numCoords; j++) {
+            if (newClusterSize[i] > 0)
+                clusters[i][j] = newClusters[i][j] / newClusterSize[i];
+            newClusters[i][j] = 0.0;   /* set back to 0 */
+        }
+        newClusterSize[i] = 0;   /* set back to 0 */
+    }
+        
+    delta /= numObjs;
+} while (delta > threshold && loop++ < 500);
+
 
     free(newClusters[0]);
     free(newClusters);
