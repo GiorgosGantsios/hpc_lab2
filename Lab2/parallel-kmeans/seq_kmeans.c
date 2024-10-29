@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <float.h>
 
 #include "kmeans.h"
 
@@ -54,7 +55,7 @@ int find_nearest_cluster(int     numClusters, /* no. clusters */
 
     /* find the cluster id that has min distance to object */
     index    = 0;
-    min_dist = euclid_dist_2(numCoords, object, clusters[0]);
+    min_dist = FLT_MAX;//euclid_dist_2(numCoords, object, clusters[0]);
 
     for (i=1; i<numClusters; i++) {
         dist = euclid_dist_2(numCoords, object, clusters[i]);
@@ -95,8 +96,11 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     assert(newClusters != NULL);
     newClusters[0] = (float*)  calloc(numClusters * numCoords, sizeof(float));
     assert(newClusters[0] != NULL);
+
+    #pragma omp parallel for \
+            schedule(static)
     for (i=1; i<numClusters; i++)
-        newClusters[i] = newClusters[i-1] + numCoords;
+        newClusters[i] = (float*) (i*sizeof(float*) + numCoords); // newClusters[i-1] + numCoords;
 
     do {
         delta = 0.0;
