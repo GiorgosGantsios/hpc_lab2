@@ -37,8 +37,12 @@ float euclid_dist_2(int    numdims,  /* no. dimensions */
     int i;
     float ans=0.0;
 
-    for (i=0; i<numdims; i++)
-        ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
+    #pragma omp parallel for schedule(static) reduction(+:ans)
+    for (i=0; i<numdims; i++){
+        //printf("numthreads: %d\n", omp_get_num_threads());
+        float diff = coord1[i] - coord2[i];
+        ans += diff * diff;
+    }
 
     return(ans);
 }
@@ -50,22 +54,38 @@ int find_nearest_cluster(int     numClusters, /* no. clusters */
                          float  *object,      /* [numCoords] */
                          float **clusters)    /* [numClusters][numCoords] */
 {
-    int   index, i;
-    float dist, min_dist;
+    int i;
+    float min_dist = FLT_MAX; // Initialize to max float
+    int index = -1; // To store the index of the nearest cluster
 
-    /* find the cluster id that has min distance to object */
-    index    = 0;
-    min_dist = FLT_MAX;//euclid_dist_2(numCoords, object, clusters[0]);
+    // Use reduction for min_dist and track index separately
+    #pragma omp parallel 
+    {
+        float local_min_dist = FLT_MAX; // Local minimum distance for each thread
+        int local_index = -1; // Local index for the minimum distance
 
-    for (i=1; i<numClusters; i++) {
-        dist = euclid_dist_2(numCoords, object, clusters[i]);
-        /* no need square root */
-        if (dist < min_dist) { /* find the min and its array index */
-            min_dist = dist;
-            index    = i;
+        #pragma omp for
+        for (i = 1; i < numClusters; i++) {
+            float dist = euclid_dist_2(numCoords, object, clusters[i]);
+
+            // Update local minimum if a new minimum is found
+            if (dist < local_min_dist) {
+                local_min_dist = dist;
+                local_index = i;
+            }
+        }
+
+        // Combine local minimums into the global minimum
+        #pragma omp critical
+        {
+            if (local_min_dist < min_dist) {
+                min_dist = local_min_dist;
+                index = local_index;
+            }
         }
     }
-    return(index);
+
+    return index; // Return the index of the nearest cluster
 }
 
 /*----< seq_kmeans() >-------------------------------------------------------*/
@@ -97,10 +117,8 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     newClusters[0] = (float*)  calloc(numClusters * numCoords, sizeof(float));
     assert(newClusters[0] != NULL);
 
-    #pragma omp parallel for \
-            schedule(static)
     for (i=1; i<numClusters; i++)
-        newClusters[i] = (float*) (i*sizeof(float*) + numCoords); // newClusters[i-1] + numCoords;
+        newClusters[i] = newClusters[i-1] + numCoords;
 
     do {
         delta = 0.0;
