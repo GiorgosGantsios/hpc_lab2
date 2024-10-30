@@ -105,7 +105,7 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
 
 do {
     delta = 0.0;
-    #pragma omp parallel for private(index, j) reduction(+:delta)
+    #pragma omp parallel for private(index, j) reduction(+:delta) reduction(+:newClusterSize[:numClusters])
     for (i = 0; i < numObjs; i++) {
         /* find the nearest cluster center */
         index = find_nearest_cluster(numClusters, numCoords, objects[i], clusters);
@@ -117,7 +117,7 @@ do {
         }
         
         /* Update cluster centers using atomic operations for thread safety */
-        #pragma omp atomic
+        // #pragma omp critical
         newClusterSize[index]++;
 
         for (j = 0; j < numCoords; j++) {
@@ -126,7 +126,7 @@ do {
     }
 
     /* Average the sum and replace old cluster centers with newClusters */
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(4)
     for (i = 0; i < numClusters; i++) {
         for (j = 0; j < numCoords; j++) {
             if (newClusterSize[i] > 0)
