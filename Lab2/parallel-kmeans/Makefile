@@ -85,15 +85,15 @@ check: all
 	./seq_main -q    -n 4 -i Image_data/color100.txt
 
 experiment_12:
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' > texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
-    ./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' > texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
+	./seq_main -o -b -n 128 -i Image_data/texture17695.bin | grep "Computation timing" | awk '{print $$4}' >> texture17695.csv
