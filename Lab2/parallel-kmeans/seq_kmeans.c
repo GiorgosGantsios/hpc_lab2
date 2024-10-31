@@ -36,7 +36,7 @@ float euclid_dist_2(int    numdims,  /* no. dimensions */
     int i;
     float ans=0.0;
 
-    #pragma omp parallel for schedule(static) reduction(+:ans)
+    // #pragma omp parallel for schedule(static) reduction(+:ans)
     for (i=0; i<numdims; i++){
         //printf("numthreads: %d\n", omp_get_num_threads());
         float diff = coord1[i] - coord2[i];
@@ -105,7 +105,7 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
 
 do {
     delta = 0.0;
-    #pragma omp parallel for private(index, j) reduction(+:delta) reduction(+:newClusterSize[:numClusters])
+    // #pragma omp parallel for private(index, j) reduction(+:delta) reduction(+:newClusterSize[:numClusters])
     for (i = 0; i < numObjs; i++) {
         /* find the nearest cluster center */
         index = find_nearest_cluster(numClusters, numCoords, objects[i], clusters);
@@ -120,17 +120,20 @@ do {
         // #pragma omp critical
         newClusterSize[index]++;
 
+        #pragma omp parallel for num_threads(numCoords) schedule(static)
         for (j = 0; j < numCoords; j++) {
             newClusters[index][j] += objects[i][j];
         }
     }
 
     /* Average the sum and replace old cluster centers with newClusters */
-    #pragma omp parallel for num_threads(4)
+    // #pragma omp parallel for num_threads(4)
     for (i = 0; i < numClusters; i++) {
+        int newClusterSizeTemp = newClusterSize[i];
+        #pragma omp parallel for num_threads(numCoords) private(newClusterSizeTemp)
         for (j = 0; j < numCoords; j++) {
-            if (newClusterSize[i] > 0)
-                clusters[i][j] = newClusters[i][j] / newClusterSize[i];
+            if (newClusterSizeTemp > 0)
+                clusters[i][j] = newClusters[i][j] / newClusterSizeTemp;
             newClusters[i][j] = 0.0;   /* set back to 0 */
         }
         newClusterSize[i] = 0;   /* set back to 0 */
