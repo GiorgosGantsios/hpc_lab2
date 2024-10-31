@@ -120,7 +120,7 @@ do {
         // #pragma omp critical
         newClusterSize[index]++;
 
-        #pragma omp parallel for num_threads(numCoords) schedule(static)
+        #pragma omp parallel for num_threads(2) schedule(static)
         for (j = 0; j < numCoords; j++) {
             newClusters[index][j] += objects[i][j];
         }
@@ -130,8 +130,9 @@ do {
     // #pragma omp parallel for num_threads(4)
     for (i = 0; i < numClusters; i++) {
         int newClusterSizeTemp = newClusterSize[i];
-        #pragma omp parallel for num_threads(numCoords) private(newClusterSizeTemp)
+        #pragma omp parallel for num_threads(2) private(newClusterSizeTemp)
         for (j = 0; j < numCoords; j++) {
+            // printf("%d\n",omp_get_thread_num());
             if (newClusterSizeTemp > 0)
                 clusters[i][j] = newClusters[i][j] / newClusterSizeTemp;
             newClusters[i][j] = 0.0;   /* set back to 0 */
