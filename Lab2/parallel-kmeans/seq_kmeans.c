@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/* ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*   File:         seq_kmeans.c  (sequential version)                        */
 /*   Description:  Implementation of simple k-means clustering algorithm     */
 /*                 This program takes an array of N data objects, each with  */
@@ -97,38 +97,51 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     for (i=1; i<numClusters; i++)
         newClusters[i] = newClusters[i-1] + numCoords;
 
+    omp_set_num_threads(8);
     delta = 0.0;
     for (i=0; i<numObjs; i++) {
             /* find the array index of nestest cluster center */
-            index = find_nearest_cluster(numClusters, numCoords, objects[i],
-                                         clusters);
-
+            index = find_nearest_cluster(numClusters, numCoords, objects[i], clusters);
+            
             /* if membership changes, increase delta by 1 */
-            if (membership[i] != index) delta += 1.0;
-
+            if (membership[i] != index) {
+                // #pragma omp atomic
+                delta += 1.0;
+            }
+            
             /* assign the membership to object i */
             membership[i] = index;
-
             /* update new cluster center : sum of objects located within */
+            
             newClusterSize[index]++;
+            // #pragma omp parallel for private (newClusters)
             for (j=0; j<numCoords; j++)
-                newClusters[index][j] += objects[i][j];
+                    newClusters[index][j] += objects[i][j];
         }
 
         /* average the sum and replace old cluster center with newClusters */
+        // # pragma omp parallel for
+        // # pragma omp parallel for
         for (i=0; i<numClusters; i++) {
+            // # pragma omp parallel for
             for (j=0; j<numCoords; j++) {
-                if (newClusterSize[i] > 0)
+                if (newClusterSize[i] > 0) {
+                    // #pragma omp critical
                     clusters[i][j] = newClusters[i][j] / newClusterSize[i];
+                }
                 newClusters[i][j] = 0.0;   /* set back to 0 */
             }
             newClusterSize[i] = 0;   /* set back to 0 */
         }
-            
         delta /= numObjs;
-
-
-    for (loop = 0; delta > threshold && loop++ < 500; loop++)  {
+    
+    #pragma omp parallel for
+    for(loop = 0; loop < 500; loop++) {
+        if (delta < threshold)  {
+            //printf("\nloop: %d\n", delta);
+            loop = 500;
+            continue;
+        }
         delta = 0.0;
         for (i=0; i<numObjs; i++) {
             /* find the array index of nestest cluster center */
