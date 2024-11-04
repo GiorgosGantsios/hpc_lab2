@@ -15,6 +15,7 @@
 #define _H_KMEANS
 
 #include <assert.h>
+#include <omp.h>
 
 int seq_kmeans(float**, int, int, int, float, int*, float**);
 
