@@ -81,7 +81,7 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     int     *newClusterSize; /* [numClusters]: no. objects assigned in each
                                 new cluster */
     float    delta;          /* % of objects change their clusters */
-    float  **newClusters;    /* [numClusters][numCoords] */
+    float  *newClusters;    /* [numClusters][numCoords] */
 
     /* initialize membership[] */
     for (i=0; i<numObjs; i++) membership[i] = -1;
@@ -90,16 +90,17 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     newClusterSize = (int*) calloc(numClusters, sizeof(int));
     assert(newClusterSize != NULL);
 
-    newClusters    = (float**) malloc(numClusters *            sizeof(float*));
+    newClusters    = (float*) malloc(numClusters * numCoords * sizeof(float));
     assert(newClusters != NULL);
-    newClusters[0] = (float*)  calloc(numClusters * numCoords, sizeof(float));
+    /*newClusters[0] = (float*)  calloc(numClusters * numCoords, sizeof(float));
     assert(newClusters[0] != NULL);
-    for (i=1; i<numClusters; i++)
-        newClusters[i] = newClusters[i-1] + numCoords;
+
+    for (i=1; i<numClusters*numCoords; i++)
+        newClusters[i] = newClusters[0] + i*numCoords;*/
 
     do {
         delta = 0.0;
-        #pragma omp parallel for private (index) reduction(+:delta) 
+        #pragma omp parallel for private (index, j) reduction(+:delta) reduction(+:newClusterSize[:numClusters]) reduction (+:newClusters[:numClusters*numCoords])
         for (i=0; i<numObjs; i++) {
             /* find the array index of nestest cluster center */
             index = find_nearest_cluster(numClusters, numCoords, objects[i],
@@ -113,21 +114,21 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
             /* assign the membership to object i */
             membership[i] = index;
 
-            /* update new cluster center : sum of objects located within */
-            #pragma omp critical
-            {
             newClusterSize[index]++;
+
+            /* update new cluster center : sum of objects located within */
+ 
             for (j=0; j<numCoords; j++)
-                newClusters[index][j] += objects[i][j];
-            }
+                newClusters[index*numCoords + j] += objects[i][j];
+            
         }
 
         /* average the sum and replace old cluster center with newClusters */
         for (i=0; i<numClusters; i++) {
             for (j=0; j<numCoords; j++) {
                 if (newClusterSize[i] > 0)
-                    clusters[i][j] = newClusters[i][j] / newClusterSize[i];
-                newClusters[i][j] = 0.0;   /* set back to 0 */
+                    clusters[i][j] = newClusters[i*numCoords + j] / newClusterSize[i];
+                newClusters[i*numCoords + j] = 0.0;   /* set back to 0 */
             }
             newClusterSize[i] = 0;   /* set back to 0 */
         }
@@ -135,7 +136,6 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
         delta /= numObjs;
     } while (delta > threshold && loop++ < 500);
 
-    free(newClusters[0]);
     free(newClusters);
     free(newClusterSize);
 
