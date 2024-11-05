@@ -35,6 +35,7 @@ float euclid_dist_2(int    numdims,  /* no. dimensions */
     int i;
     float ans=0.0;
 
+
     for (i=0; i<numdims; i++)
         ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
 
@@ -117,7 +118,7 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
             newClusterSize[index]++;
 
             /* update new cluster center : sum of objects located within */
- 
+            #pragma omp parallel for 
             for (j=0; j<numCoords; j++)
                 newClusters[index*numCoords + j] += objects[i][j];
             
