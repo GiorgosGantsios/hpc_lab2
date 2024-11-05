@@ -60,10 +60,12 @@ int find_nearest_cluster(int     numClusters, /* no. clusters */
     for (i=1; i<numClusters; i++) {
         dist = euclid_dist_2(numCoords, object, clusters[i]);
         /* no need square root */
-
+        #pragma omp critical
+        {
         if (dist < min_dist) { /* find the min and its array index */
             min_dist = dist;
             index    = i;
+        }
         }
     }
     return(index);
