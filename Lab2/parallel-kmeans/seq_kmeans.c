@@ -56,9 +56,11 @@ int find_nearest_cluster(int     numClusters, /* no. clusters */
     index    = 0;
     min_dist = euclid_dist_2(numCoords, object, clusters[0]);
 
+    #pragma omp parallel for private(dist)
     for (i=1; i<numClusters; i++) {
         dist = euclid_dist_2(numCoords, object, clusters[i]);
         /* no need square root */
+
         if (dist < min_dist) { /* find the min and its array index */
             min_dist = dist;
             index    = i;
@@ -118,7 +120,6 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
             newClusterSize[index]++;
 
             /* update new cluster center : sum of objects located within */
- 
             for (j=0; j<numCoords; j++)
                 newClusters[index*numCoords + j] += objects[i][j];
             
