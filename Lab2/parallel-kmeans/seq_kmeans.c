@@ -103,7 +103,7 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
 
     do {
         delta = 0.0;
-        #pragma omp parallel for private (index, j) reduction(+:delta) reduction(+:newClusterSize[:numClusters]) reduction (+:newClusters[:numClusters*numCoords])
+        #pragma omp parallel for schedule(static) private (index, j) reduction(+:delta) reduction(+:newClusterSize[:numClusters]) reduction (+:newClusters[:numClusters*numCoords])
         for (i=0; i<numObjs; i++) {
             /* find the array index of nestest cluster center */
             index = find_nearest_cluster(numClusters, numCoords, objects[i],
